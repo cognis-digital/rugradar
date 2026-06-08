@@ -1,0 +1,9 @@
+services:
+  rugradar:
+    build: .
+    image: cognis/rugradar:local
+    restart: unless-stopped
+    ports: ["8000:8000"]
+    environment:
+      - COGNIS_LOG_LEVEL=info
+    volumes: ["./data:/data"]

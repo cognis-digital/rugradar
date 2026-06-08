@@ -1,0 +1,23 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata: { name: rugradar, labels: { app: rugradar } }
+spec:
+  replicas: 1
+  selector: { matchLabels: { app: rugradar } }
+  template:
+    metadata: { labels: { app: rugradar } }
+    spec:
+      containers:
+        - name: rugradar
+          image: ghcr.io/cognis-digital/rugradar:latest
+          ports: [{ containerPort: 8000 }]
+          resources:
+            requests: { cpu: "50m", memory: "64Mi" }
+            limits: { cpu: "500m", memory: "256Mi" }
+---
+apiVersion: v1
+kind: Service
+metadata: { name: rugradar }
+spec:
+  selector: { app: rugradar }
+  ports: [{ port: 80, targetPort: 8000 }]
