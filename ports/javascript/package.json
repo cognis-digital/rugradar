@@ -1,0 +1,10 @@
+{
+  "name": "@cognis/rugradar",
+  "version": "0.2.0",
+  "description": "JavaScript port of rugradar (Cognis Neural Suite)",
+  "bin": {
+    "rugradar": "index.js"
+  },
+  "license": "LicenseRef-COCL-1.0",
+  "type": "module"
+}
