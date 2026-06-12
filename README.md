@@ -16,7 +16,7 @@
 </div>
 
 ```bash
-pip install cognis-rugradar
+pip install "git+https://github.com/cognis-digital/rugradar.git"
 rugradar scan .            # → prioritized findings in seconds
 ```
 
@@ -49,7 +49,7 @@ Self-hostable, no-API-key rug detector with a transparent open ruleset — trust
 ## Quick start
 
 ```bash
-pip install cognis-rugradar
+pip install "git+https://github.com/cognis-digital/rugradar.git"
 rugradar --version
 rugradar scan .                       # scan current project
 rugradar scan . --format json         # machine-readable
