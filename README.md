@@ -20,6 +20,12 @@ pip install "git+https://github.com/cognis-digital/rugradar.git"
 rugradar scan .            # → prioritized findings in seconds
 ```
 
+<!-- cognis:layman:start -->
+## What is this?
+
+RUGRADAR scans the code of blockchain token contracts to spot common scam and rug-pull traps before you invest. It checks for red flags like hidden owner backdoors, functions that let the creator print unlimited tokens, mechanisms that can freeze your funds or block you from selling, and fees that can silently be raised to 100%. Point it at a Solidity source file or a contract ABI, and it returns a plain risk score and verdict — SAFE, CAUTION, HIGH_RISK, or CRITICAL — along with a list of exactly which warning signs it found and where. It is built for traders, developers, and security researchers who want a fast, self-hosted, no-account-required check they can run from the command line or wire into automated pipelines.
+<!-- cognis:layman:end -->
+
 ## Contents
 
 - [Why rugradar?](#why) · [Features](#features) · [Quick start](#quick-start) · [Example](#example) · [Architecture](#architecture) · [AI stack](#ai-stack) · [How it compares](#how-it-compares) · [Integrations](#integrations) · [Install anywhere](#install-anywhere) · [Related](#related) · [Contributing](#contributing)
@@ -46,6 +52,42 @@ Self-hostable, no-API-key rug detector with a transparent open ruleset — trust
 <div align="right"><a href="#top">↑ back to top</a></div>
 
 <a name="quick-start"></a>
+<!-- cognis:install:start -->
+## Install
+
+`rugradar` is source-available (not published to PyPI) — every method below installs
+straight from GitHub. Pick whichever you prefer; the one-line scripts auto-detect
+the best tool available on your machine.
+
+**One-liner (Linux / macOS):**
+```sh
+curl -fsSL https://raw.githubusercontent.com/cognis-digital/rugradar/HEAD/install.sh | sh
+```
+
+**One-liner (Windows PowerShell):**
+```powershell
+irm https://raw.githubusercontent.com/cognis-digital/rugradar/HEAD/install.ps1 | iex
+```
+
+**Or install manually — any one of:**
+```sh
+pipx install "git+https://github.com/cognis-digital/rugradar.git"     # isolated (recommended)
+uv tool install "git+https://github.com/cognis-digital/rugradar.git"  # uv
+pip install "git+https://github.com/cognis-digital/rugradar.git"      # pip
+```
+
+**From source:**
+```sh
+git clone https://github.com/cognis-digital/rugradar.git
+cd rugradar && pip install .
+```
+
+Then run:
+```sh
+rugradar --help
+```
+<!-- cognis:install:end -->
+
 ## Quick start
 
 ```bash

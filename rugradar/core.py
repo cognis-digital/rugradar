@@ -387,9 +387,10 @@ def _detect_self_destruct(src: str) -> List[Finding]:
 def _detect_hidden_owner(src: str) -> List[Finding]:
     out: List[Finding] = []
     # A second hard-coded admin address compared in require() = hidden owner.
-    addrs = re.findall(r"0x[a-fA-F0-9]{40}", src)
-    if len(set(addrs)) >= 1 and re.search(
-            r"require\s*\([^)]*msg\.sender\s*==\s*0x[a-fA-F0-9]{40}", src):
+    # Pattern 1: raw hex address directly in require(msg.sender == 0x...).
+    direct = re.search(
+        r"require\s*\([^)]*msg\.sender\s*==\s*0x[a-fA-F0-9]{40}", src)
+    if direct:
         out.append(Finding(
             id="HIDDEN_OWNER",
             title="Hard-coded hidden admin address",
@@ -398,8 +399,40 @@ def _detect_hidden_owner(src: str) -> List[Finding]:
                     "hard-coded address - a backdoor owner outside the "
                     "normal ownership model."),
             evidence=["require(msg.sender == 0x...)"],
-            lines=_kw_lines(src, r"require\s*\([^)]*msg\.sender\s*==\s*0x[a-fA-F0-9]{40}"),
+            lines=_kw_lines(src,
+                r"require\s*\([^)]*msg\.sender\s*==\s*0x[a-fA-F0-9]{40}"),
         ))
+        return out
+    # Pattern 2: named address constant (address constant/immutable FOO = 0x...)
+    # used in require(msg.sender == FOO).  This is the same backdoor via an alias.
+    named_consts = {
+        name: addr
+        for name, addr in re.findall(
+            r"address\s+(?:(?:private|public|internal)\s+)?(?:constant|immutable)\s+"
+            r"(\w+)\s*=\s*(0x[a-fA-F0-9]{40})",
+            src,
+        )
+    }
+    if named_consts:
+        req_names = re.findall(r"require\s*\([^)]*msg\.sender\s*==\s*(\w+)", src)
+        matched = [n for n in req_names if n in named_consts]
+        if matched:
+            out.append(Finding(
+                id="HIDDEN_OWNER",
+                title="Hard-coded hidden admin address (named constant)",
+                severity="critical",
+                detail=(
+                    "A privileged check compares msg.sender against '%s', "
+                    "a named constant holding a hard-coded address (%s). "
+                    "This is a backdoor owner outside the normal ownership model."
+                    % (matched[0], named_consts[matched[0]])
+                ),
+                evidence=["require(msg.sender == %s)" % matched[0]],
+                lines=_kw_lines(
+                    src,
+                    r"require\s*\([^)]*msg\.sender\s*==\s*" + matched[0],
+                ),
+            ))
     return out
 
 
@@ -457,7 +490,7 @@ def scan_abi(abi: Union[str, List[Dict[str, Any]]]) -> Dict[str, Any]:
     for e in mutating:
         name = e.get("name", "") or ""
         for pat, (fid, title, sev, detail) in _ABI_RISK_NAMES.items():
-            if re.search(pat, name):
+            if re.search(pat, name, re.I):
                 findings.append(Finding(
                     id=fid,
                     title=title + ": %s()" % name,
