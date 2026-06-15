@@ -140,6 +140,8 @@ def scan_source(source: str) -> Dict[str, Any]:
     """Analyze Solidity source text and return a risk report."""
     if not isinstance(source, str):
         raise TypeError("source must be a string of Solidity code")
+    if not source.strip():
+        return _build_report([], "solidity", source=source)
 
     raw = source
     src = _strip_comments(source)
@@ -470,11 +472,18 @@ _ABI_RISK_NAMES = {
 def scan_abi(abi: Union[str, List[Dict[str, Any]]]) -> Dict[str, Any]:
     """Analyze a contract ABI (JSON string or parsed list)."""
     if isinstance(abi, str):
-        abi = json.loads(abi)
+        if not abi.strip():
+            raise ValueError("ABI input is empty")
+        try:
+            abi = json.loads(abi)
+        except json.JSONDecodeError as exc:
+            raise ValueError("ABI is not valid JSON: %s" % exc) from exc
     if isinstance(abi, dict) and "abi" in abi:
         abi = abi["abi"]
     if not isinstance(abi, list):
         raise TypeError("ABI must be a JSON array of entries (or {abi:[...]})")
+    if len(abi) == 0:
+        return _build_report([], "abi")
 
     findings: List[Finding] = []
     func_names = [
@@ -525,6 +534,8 @@ def scan_abi(abi: Union[str, List[Dict[str, Any]]]) -> Dict[str, Any]:
 
 def scan_text(text: str) -> Dict[str, Any]:
     """Convenience: detect whether input is ABI JSON or Solidity, then scan."""
+    if not isinstance(text, str):
+        raise TypeError("text must be a string")
     stripped = text.lstrip()
     if stripped.startswith("[") or stripped.startswith("{"):
         try:
@@ -574,8 +585,17 @@ def _build_report(findings: List[Finding], input_kind: str,
 
 def summarize(report: Dict[str, Any]) -> str:
     """Human-readable one-paragraph summary of a report."""
-    c = report["counts"]
+    if not isinstance(report, dict):
+        raise TypeError("report must be a dict")
+    c = report.get("counts") or {}
     return ("%s verdict=%s score=%d/100  "
             "(critical=%d high=%d medium=%d low=%d info=%d)" % (
-                report["tool"], report["verdict"], report["risk_score"],
-                c["critical"], c["high"], c["medium"], c["low"], c["info"]))
+                report.get("tool", TOOL_NAME),
+                report.get("verdict", "UNKNOWN"),
+                report.get("risk_score", 0),
+                c.get("critical", 0),
+                c.get("high", 0),
+                c.get("medium", 0),
+                c.get("low", 0),
+                c.get("info", 0),
+            ))

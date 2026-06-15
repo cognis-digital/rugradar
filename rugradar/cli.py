@@ -50,7 +50,7 @@ _SEV_ORDER = {"critical": 0, "high": 1, "medium": 2, "low": 3, "info": 4}
 def _read_input(path: str) -> str:
     if path == "-":
         return sys.stdin.read()
-    with open(path, "r", encoding="utf-8") as fh:
+    with open(path, "r", encoding="utf-8", errors="replace") as fh:
         return fh.read()
 
 
@@ -115,14 +115,18 @@ def main(argv: Optional[List[str]] = None) -> int:
     parser = _build_parser()
     args = parser.parse_args(argv)
 
-    if args.command != "scan":
-        parser.print_help()
+    if getattr(args, "command", None) != "scan":
+        parser.print_help(sys.stderr)
         return 1
 
     try:
         text = _read_input(args.path)
     except OSError as exc:
-        print("error: cannot read %s: %s" % (args.path, exc), file=sys.stderr)
+        print("error: cannot read %r: %s" % (args.path, exc), file=sys.stderr)
+        return 1
+
+    if not text.strip():
+        print("error: input is empty: %r" % args.path, file=sys.stderr)
         return 1
 
     try:
@@ -135,6 +139,9 @@ def main(argv: Optional[List[str]] = None) -> int:
     except (ValueError, TypeError) as exc:
         print("error: failed to parse input: %s" % exc, file=sys.stderr)
         return 1
+    except Exception as exc:  # noqa: BLE001
+        print("error: unexpected failure while scanning: %s" % exc, file=sys.stderr)
+        return 1
 
     if args.format == "json":
         print(json.dumps(report, indent=2))
@@ -142,7 +149,8 @@ def main(argv: Optional[List[str]] = None) -> int:
         print(_render_table(report))
 
     threshold = _FAIL_ON_CHOICES[args.fail_on]
-    if _VERDICT_RANK[report["verdict"]] >= threshold:
+    verdict_rank = _VERDICT_RANK.get(report.get("verdict", "SAFE"), 0)
+    if verdict_rank >= threshold:
         return 2
     return 0
 

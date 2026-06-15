@@ -1,6 +1,11 @@
 """RUGRADAR MCP server — exposes scan() as an MCP tool for Cognis.Studio."""
 from __future__ import annotations
-from rugradar.core import scan, to_json
+
+import json
+import sys
+
+from rugradar.core import scan_text
+
 
 def serve() -> int:
     """Start an MCP stdio server. Requires the optional 'mcp' extra:
@@ -8,15 +13,24 @@ def serve() -> int:
     """
     try:
         from mcp.server.fastmcp import FastMCP
-    except Exception:
-        print("Install the MCP extra: pip install 'cognis-rugradar[mcp]'")
+    except ImportError:
+        print(
+            "Install the MCP extra: pip install 'cognis-rugradar[mcp]'",
+            file=sys.stderr,
+        )
         return 1
+
     app = FastMCP("rugradar")
 
     @app.tool()
     def rugradar_scan(target: str) -> str:
-        """Token contract risk scanner detecting honeypots, hidden mint/blacklist functions, owner backdoors, and unlocked liquidity before you ape.. Returns JSON findings."""
-        return to_json(scan(target))
+        """Token contract risk scanner detecting honeypots, hidden mint/blacklist,
+        owner backdoors and fee traps. Returns JSON findings."""
+        try:
+            report = scan_text(target)
+        except (ValueError, TypeError) as exc:
+            return json.dumps({"error": str(exc)})
+        return json.dumps(report, indent=2)
 
     app.run()
     return 0
