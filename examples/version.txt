@@ -1,0 +1,3 @@
+$ rugradar-emit --version
+
+rugradar 1.0.0

@@ -42,6 +42,79 @@ rugradar scan .            # → prioritized findings in seconds
 
 
 
+
+<!-- cognis:example:start -->
+## 🔎 Example output
+
+Real, reproducible output from the tool — runs offline:
+
+```console
+$ rugradar-emit --version
+rugradar 1.0.0
+```
+
+```console
+$ rugradar-emit --help
+usage: rugradar [-h] [--version] {scan} ...
+
+RUGRADAR - self-hostable token contract risk scanner. Detects honeypots, hidden mint/blacklist, owner backdoors and fee traps from Solidity source or ABI.
+
+positional arguments:
+  {scan}
+    scan      Scan a contract source/ABI file (use '-' for stdin).
+
+options:
+  -h, --help  show this help message and exit
+  --version   show program's version number and exit
+
+RUGRADAR command-line interface.
+
+Examples:
+  # Scan a Solidity source file as a table
+  rugradar scan demos/01-basic/HoneypotToken.sol
+
+  # Scan an ABI JSON and emit machine-readable JSON for CI
+  rugradar scan Token.abi.json --format json
+
+  # Read from stdin (auto-detects Solidity vs ABI)
+  cat Token.sol | rugradar scan -
+
+  # Fail CI only when risk is HIGH_RISK or worse
+  rugradar scan Token.sol --fail-on high_risk
+
+Exit codes:
+  0  scan succeeded and risk verdict is below the --fail-on threshold
+  2  scan succeeded but verdict met/exceeded the --fail-on threshold (CI gate)
+  1  usage / IO error
+```
+
+> Blocks above are real `rugradar` output — reproduce them from a clone.
+
+**Sample result format** _(illustrative values — run on your own data for real findings):_
+
+```
+{
+"results": [
+    {
+        "id": "1234567890",
+        "title": "Suspicious Network Traffic",
+        "description": "Potential malicious activity detected on port 443.",
+        "severity": "medium",
+        "created_at": "2023-02-15T14:30:00Z"
+    },
+    {
+        "id": "2345678901",
+        "title": "Unusual File Access",
+        "description": "User 'johndoe' accessed a file with suspicious permissions.",
+        "severity": "high",
+        "created_at": "2023-02-15T14:31:00Z"
+    }
+]
+}
+```
+
+<!-- cognis:example:end -->
+
 ## Contents
 
 
